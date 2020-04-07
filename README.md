@@ -1,6 +1,6 @@
 # **JWTea** 
-![Maven Central](https://img.shields.io/maven-central/v/dev.tindersamurai/jwtea?style=for-the-badge)
-![GitHub](https://img.shields.io/github/license/henryco/jwtea?color=brown&style=for-the-badge)
+[![Maven Central](https://img.shields.io/maven-central/v/dev.tindersamurai/jwtea?style=for-the-badge)](https://search.maven.org/artifact/dev.tindersamurai/jwtea)
+[![GitHub](https://img.shields.io/github/license/henryco/jwtea?color=brown&style=for-the-badge)](https://github.com/henryco/jwtea/blob/master/LICENSE)
 
 Easy jwt auth for spring security.
 
