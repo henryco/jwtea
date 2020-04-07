@@ -17,6 +17,32 @@
 
     <name>jwtea</name>
     <description>Easy jwt auth for spring security.</description>
+    <url>https://github.com/henryco/jwtea</url>
+
+    <scm>
+        <url>https://github.com/henryco/jwtea</url>
+        <connection>scm:git:git://github.com/henryco/jwtea.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:henryco/jwtea.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <organization>
+        <name>dev.tindersamurai</name>
+        <url>https://tindersamurai.dev</url>
+    </organization>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/henryco/jwtea/issues</url>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>https://github.com/henryco/jwtea/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <developers>
         <developer>
@@ -160,17 +186,57 @@
         </resources>
     </build>
 
-    <distributionManagement>
-        <repository>
-            <id>central</id>
-            <name>08bfd5dc5968-releases</name>
-            <url>http://192.168.75.131:9900/artifactory/libs-release-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>08bfd5dc5968-snapshots</name>
-            <url>http://192.168.75.131:9900/artifactory/libs-snapshot</url>
-        </snapshotRepository>
-    </distributionManagement>
+    <profiles>
+        <profile>
+            <id>release-sign-artifacts</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+
+            <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+                <repository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+            </distributionManagement>
+
+        </profile>
+    </profiles>
 
 </project>
