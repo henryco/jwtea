@@ -188,6 +188,23 @@
 
     <profiles>
         <profile>
+            <id>artifactory</id>
+
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <name>08bfd5dc5968-releases</name>
+                    <url>http://192.168.75.131:9900/artifactory/libs-release-local</url>
+                </repository>
+                <snapshotRepository>
+                    <id>snapshots</id>
+                    <name>08bfd5dc5968-snapshots</name>
+                    <url>http://192.168.75.131:9900/artifactory/libs-snapshot</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+
+        <profile>
             <id>release-sign-artifacts</id>
             <activation>
                 <property>
