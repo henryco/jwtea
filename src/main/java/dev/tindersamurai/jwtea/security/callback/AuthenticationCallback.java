@@ -5,8 +5,8 @@ import dev.tindersamurai.jwtea.security.callback.data.Token;
 
 public interface AuthenticationCallback {
 
-	default void preAuthentication(Token token, HttpServlet servlet) {
-		// nothing
+	default Token preAuthentication(Token token, HttpServlet servlet) {
+		return token;
 	}
 
 	void postAuthentication(Token token, HttpServlet servlet);

@@ -6,8 +6,8 @@ import dev.tindersamurai.jwtea.security.callback.exception.AuthorizationExceptio
 
 public interface AuthorizationCallback {
 
-	default void preAuthorization(Token token, HttpServlet servlet) throws AuthorizationException {
-		// nothing
+	default Token preAuthorization(Token token, HttpServlet servlet) throws AuthorizationException {
+		return token;
 	}
 
 	void postAuthorization(Token token, HttpServlet servlet) throws AuthorizationException ;

@@ -25,10 +25,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -75,6 +72,19 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 		filterChain.doFilter(request, response);
 	}
 
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> extractClaims(Claims body) {
+		try {
+			val map = body.get("extra", Map.class);
+			if (map == null)
+				return Collections.emptyMap();
+			return ((Map<String, Object>) map);
+		} catch (Exception e) {
+			log.warn("cannot parse claims");
+			return Collections.emptyMap();
+		}
+	}
+
 	private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request, HttpServletResponse response) {
 
 		String token;
@@ -104,20 +114,32 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 						.parseClaimsJws(token.replace(jwtSecretProperties.getJwtTokenPrefix(), ""));
 
 				val expiration = parsedToken.getBody().getExpiration();
+				val audience = parsedToken.getBody().getAudience();
 				val username = parsedToken.getBody().getSubject();
 				val tokenId = parsedToken.getBody().getId();
+				val claims = extractClaims(parsedToken.getBody());
 
-				val tokenData = new Token(username, tokenId, expiration, token);
+				Token tokenData = new Token(audience, username, tokenId, expiration, token, claims);
 
-				if (authorizationCallback != null)
-					authorizationCallback.preAuthorization(tokenData, servlet);
+				if (authorizationCallback != null) {
+					val data = authorizationCallback.preAuthorization(new Token(
+							tokenData.getUserId(),
+							tokenData.getAudience(),
+							tokenData.getTokenId(),
+							tokenData.getExpires(),
+							tokenData.getJwt(),
+							tokenData.getClaims()
+					), servlet);
+					if (data != null)
+						tokenData = data;
+				}
 
 				val authorities = ((List<?>) parsedToken.getBody().get("role")).stream()
 						.map(a -> new SimpleGrantedAuthority((String) a)).collect(Collectors.toList());
 
 				val expirationTime = expiration.getTime();
 				if (username != null && !username.isEmpty()) {
-					val user = new TokenBasedPrincipal(tokenId, username, expirationTime);
+					val user = new TokenBasedPrincipal(audience, tokenId, username, expirationTime);
 
 					if (jwtSecretProperties.isAutoRefresh()) {
 						val time = jwtSecretProperties.getRefreshFrameTime();
@@ -138,14 +160,15 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 									.signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
 									.setHeaderParam("type", jwtSecretProperties.getJwtTokenType())
 									.setIssuer(jwtSecretProperties.getJwtTokenIssuer())
-									.setAudience(jwtSecretProperties.getJwtTokenAudience())
+									.setAudience(audience)
 									.setExpiration(newExpTime)
 									.setId(newTokenId)
 									.claim("role", roles)
 									.setSubject(username)
+									.addClaims(claims)
 									.compact();
 
-							val newTokenData = new Token(username, newTokenId, newExpTime, newToken);
+							val newTokenData = new Token(audience, username, newTokenId, newExpTime, newToken, claims);
 
 							response.addHeader(
 									jwtSecretProperties.getJwtTokenHeader(),
@@ -189,7 +212,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 							if (authorizationCallback != null)
 								authorizationCallback.postAuthorization(newTokenData, servlet);
 
-							val newUser = new TokenBasedPrincipal(tokenId, username, newTokenData.getExpires().getTime());
+							val newUser = new TokenBasedPrincipal(audience, tokenId, username, newTokenData.getExpires().getTime());
 							return new UsernamePasswordAuthenticationToken(newUser, null, authorities);
 						}
 					}

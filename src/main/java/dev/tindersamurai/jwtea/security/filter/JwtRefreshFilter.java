@@ -4,6 +4,7 @@ import dev.tindersamurai.jwtea.security.callback.RefreshTokenCallback;
 import dev.tindersamurai.jwtea.security.callback.data.HttpServlet;
 import dev.tindersamurai.jwtea.security.callback.data.Token;
 import dev.tindersamurai.jwtea.security.props.JwtSecretProperties;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -21,10 +22,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -60,6 +58,19 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 
 	private void setFilterProcessesUrl(String filterProcessesUrl) {
 		setRequestMatcher(new AntPathRequestMatcher(filterProcessesUrl));
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> extractClaims(Claims body) {
+		try {
+			val map = body.get("extra", Map.class);
+			if (map == null)
+				return Collections.emptyMap();
+			return ((Map<String, Object>) map);
+		} catch (Exception e) {
+			log.warn("cannot parse claims");
+			return Collections.emptyMap();
+		}
 	}
 
 	@Override
@@ -102,7 +113,10 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 			val expiration = body.getExpiration();
 			val username = body.getSubject();
 			val tokenId = body.getId();
-			val tokenData = new Token(username, tokenId, expiration, token);
+			val audience = body.getAudience();
+			val claims = extractClaims(body);
+
+			val tokenData = new Token(audience, username, tokenId, expiration, token, claims);
 
 			if (refreshTokenCallback != null)
 				refreshTokenCallback.preRefresh(tokenData, servlet);
@@ -115,14 +129,15 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 					.signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
 					.setHeaderParam("type", jwtSecretProperties.getJwtTokenType())
 					.setIssuer(jwtSecretProperties.getJwtTokenIssuer())
-					.setAudience(jwtSecretProperties.getJwtTokenAudience())
+					.setAudience(audience)
 					.setExpiration(newExpTime)
 					.setId(newTokenId)
 					.claim("role", roles)
+					.addClaims(claims)
 					.setSubject(username)
 					.compact();
 
-			val newTokenData = new Token(username, newTokenId, newExpTime, newToken);
+			val newTokenData = new Token(audience, username, newTokenId, newExpTime, newToken, claims);
 
 			response.addHeader(
 					jwtSecretProperties.getJwtTokenHeader(),

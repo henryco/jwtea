@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,8 +31,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 	private final AuthenticationProcessor authenticationProcessor;
 	private final JwtSecretProperties jwtSecretProperties;
-	private @Setter
-    AuthenticationCallback authenticationCallback;
+	private @Setter AuthenticationCallback authenticationCallback;
 
 	public JwtAuthenticationFilter(
 			AuthenticationProcessor authenticationProcessor,
@@ -76,33 +76,51 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		val signingKey = jwtSecretProperties.getJwtSecretKey().getBytes();
 
-		val tokenData = new Token(
+		Token tokenData = new Token(
 				user.getUsername(),
+				user.getAudience(),
 				UUID.randomUUID().toString(),
 				createExpTime(),
-				null
+				null,
+				new HashMap<>()
 		);
 
 		if (authenticationCallback != null) {
-			authenticationCallback.preAuthentication(tokenData, servlet);
+			val data = authenticationCallback.preAuthentication(new Token(
+					tokenData.getUserId(),
+					tokenData.getAudience(),
+					tokenData.getTokenId(),
+					tokenData.getExpires(),
+					tokenData.getJwt(),
+					tokenData.getClaims()
+			), servlet);
+			if (data != null)
+				tokenData = data;
+		}
+
+		val claims = new HashMap<String, Object>(); {
+			claims.put("extra", tokenData.getClaims());
 		}
 
 		val token = Jwts.builder()
 				.signWith(Keys.hmacShaKeyFor(signingKey), SignatureAlgorithm.HS512)
 				.setHeaderParam("type", jwtSecretProperties.getJwtTokenType())
 				.setIssuer(jwtSecretProperties.getJwtTokenIssuer())
-				.setAudience(jwtSecretProperties.getJwtTokenAudience())
+				.setAudience(tokenData.getAudience())
 				.setExpiration(tokenData.getExpires())
 				.setSubject(user.getUsername())
 				.setId(tokenData.getTokenId())
 				.claim("role", roles)
+				.addClaims(claims)
 				.compact();
 
 		val newTokenData = new Token(
 				tokenData.getUserId(),
+				tokenData.getAudience(),
 				tokenData.getTokenId(),
 				tokenData.getExpires(),
-				token
+				token,
+				tokenData.getClaims()
 		);
 
 		response.addHeader(

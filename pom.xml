@@ -13,7 +13,7 @@
 
     <groupId>dev.tindersamurai</groupId>
     <artifactId>jwtea</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 
     <name>jwtea</name>
     <description>Easy jwt auth for spring security.</description>
