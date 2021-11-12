@@ -32,11 +32,6 @@ public class YmlBasedJwtSecretProperties implements JwtSecretProperties {
 	}
 
 	@Override
-	public String getJwtTokenAudience() {
-		return environment.getProperty("dev.tindersamurai.jwtea.audience", "jwtea-app");
-	}
-
-	@Override
 	public String getJwtTokenIssuer() {
 		return environment.getProperty("dev.tindersamurai.jwtea.issuer", "jwtea-app");
 	}

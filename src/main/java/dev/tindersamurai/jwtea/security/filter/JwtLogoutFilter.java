@@ -4,6 +4,7 @@ import dev.tindersamurai.jwtea.security.callback.DisAuthenticationCallback;
 import dev.tindersamurai.jwtea.security.callback.data.HttpServlet;
 import dev.tindersamurai.jwtea.security.callback.data.Token;
 import dev.tindersamurai.jwtea.security.props.JwtSecretProperties;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
 import lombok.Setter;
@@ -22,6 +23,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 @Slf4j
 public class JwtLogoutFilter extends OncePerRequestFilter {
@@ -110,15 +113,30 @@ public class JwtLogoutFilter extends OncePerRequestFilter {
 
 				if (disAuthenticationCallback != null) {
 					disAuthenticationCallback.disAuthenticate(new Token(
+							parsedToken.getBody().getAudience(),
 							parsedToken.getBody().getSubject(),
 							parsedToken.getBody().getId(),
 							parsedToken.getBody().getExpiration(),
-							token
+							token,
+							extractClaims(parsedToken.getBody())
 					), new HttpServlet(request, response));
 				}
 			} catch (Exception e) {
 				log.warn("Cannot parse or process jwt token", e);
 			}
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> extractClaims(Claims body) {
+		try {
+			val map = body.get("extra", Map.class);
+			if (map == null)
+				return Collections.emptyMap();
+			return ((Map<String, Object>) map);
+		} catch (Exception e) {
+			log.warn("cannot parse claims");
+			return Collections.emptyMap();
 		}
 	}
 

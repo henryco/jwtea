@@ -20,4 +20,6 @@ public interface JWTeaAuthUserDetails extends UserDetails {
 		return true;
 	}
 
+	String getAudience();
+
 }

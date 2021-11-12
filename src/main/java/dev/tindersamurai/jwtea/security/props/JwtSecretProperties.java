@@ -14,8 +14,6 @@ public interface JwtSecretProperties {
 
 	String getJwtTokenIssuer();
 
-	String getJwtTokenAudience();
-
 	long getJwtTokenLiveTime();
 
 	long getRefreshFrameTime();
