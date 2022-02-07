@@ -112,9 +112,10 @@ public class JwtLogoutFilter extends OncePerRequestFilter {
 				}
 
 				if (disAuthenticationCallback != null) {
+
 					disAuthenticationCallback.disAuthenticate(new Token(
-							parsedToken.getBody().getAudience(),
 							parsedToken.getBody().getSubject(),
+							parsedToken.getBody().getAudience(),
 							parsedToken.getBody().getId(),
 							parsedToken.getBody().getExpiration(),
 							token,

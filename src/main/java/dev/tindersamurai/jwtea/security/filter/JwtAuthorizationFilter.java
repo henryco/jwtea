@@ -119,7 +119,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 				val tokenId = parsedToken.getBody().getId();
 				val claims = extractClaims(parsedToken.getBody());
 
-				Token tokenData = new Token(audience, username, tokenId, expiration, token, claims);
+				Token tokenData = new Token(username, audience, tokenId, expiration, token, claims);
 
 				if (authorizationCallback != null) {
 					val data = authorizationCallback.preAuthorization(new Token(
@@ -168,7 +168,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 									.addClaims(claims)
 									.compact();
 
-							val newTokenData = new Token(audience, username, newTokenId, newExpTime, newToken, claims);
+							val newTokenData = new Token(username, audience, newTokenId, newExpTime, newToken, claims);
 
 							response.addHeader(
 									jwtSecretProperties.getJwtTokenHeader(),

@@ -10,7 +10,7 @@ Add dependency to your `pom.xml`
 <dependency>
     <groupId>dev.tindersamurai</groupId>
     <artifactId>jwtea</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
 </dependency>
 ```
 

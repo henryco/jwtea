@@ -116,7 +116,7 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 			val audience = body.getAudience();
 			val claims = extractClaims(body);
 
-			val tokenData = new Token(audience, username, tokenId, expiration, token, claims);
+			val tokenData = new Token(username, audience, tokenId, expiration, token, claims);
 
 			if (refreshTokenCallback != null)
 				refreshTokenCallback.preRefresh(tokenData, servlet);
@@ -137,7 +137,7 @@ public class JwtRefreshFilter extends OncePerRequestFilter {
 					.setSubject(username)
 					.compact();
 
-			val newTokenData = new Token(audience, username, newTokenId, newExpTime, newToken, claims);
+			val newTokenData = new Token(username, audience, newTokenId, newExpTime, newToken, claims);
 
 			response.addHeader(
 					jwtSecretProperties.getJwtTokenHeader(),
